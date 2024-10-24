@@ -43,12 +43,6 @@ workflows:
           curl -X GET http://127.0.0.1:5000/base/cyberark/chave
 
   publishing:
-    webhooks:
-      - url: http://127.0.0.1:5000/base/webhook/
-        method: POST
-        body: |
-          {
-            "status": "${status}",
-            "build_id": "${build_id}",
-            "workflow": "${workflow_id}"
-          }
+    script:
+      - curl -X POST -H "Content-Type: application/json" -d '{"status": "${status}", "build_id": "${build_id}", "workflow": "${workflow_id}"}' http://127.0.0.1:5000/base/webhook/
+
