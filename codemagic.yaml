@@ -17,7 +17,8 @@ workflows:
       - name: Checkout do repositório
         script: |
           git clone --branch ${APP_BRANCH} https://github.com/lfandrade/app_principal
-          cd projeto_flutter
+          echo clonado
+          cd app_principal
 
       # Pré-checagens e Análises
       - name: Pré-flight check
