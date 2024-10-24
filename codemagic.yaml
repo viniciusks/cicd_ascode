@@ -4,6 +4,8 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
+      vars:
+        RESPONSE_CYBERARK: ""
     scripts:
       - name: Instalando dependencias
         script: |
@@ -24,11 +26,11 @@ workflows:
           # Captura o json de resposta e extrai o valor do campo "message" 
           RESPONSE=$(curl -s -X POST http://127.0.0.1:5000/base/veracode/ | jq -r '.message')
 
-          # setando como variavel de ambiente
-          export RESPONSE_CYBERARK=$RESPONSE
+          # setando como variavel de ambiente no arquivo de env
+          echo "RESPONSE_CYBERARK=$RESPONSE" >> $CM_ENV_PATH
 
           # output opicional para depurar
-          echo "Captured response: $RESPONSE_CYBERARK"
+          echo "Captured response: $RESPONSE"
         
       - name: Usando os dados recuperados do Cyberark
         script: |
@@ -39,15 +41,16 @@ workflows:
           curl -X POST http://127.0.0.1:5000/base/veracode/
           curl -X POST http://127.0.0.1:5000/base/browserstack/
           curl -X GET http://127.0.0.1:5000/base/cyberark/chave
+
   publishing:
-      webhooks:
-        - url: http://127.0.0.1:5000/base/webhook/
-          headers:
-            Authorization: Bearer TOKEN
-          method: POST
-          body: |
-            {
-              "status": "${status}",
-              "build_id": "${build_id}",
-              "workflow": "${workflow_id}"
-            }
+    webhooks:
+      - url: http://127.0.0.1:5000/base/webhook/
+        headers:
+          Authorization: Bearer TOKEN
+        method: POST
+        body: |
+          {
+            "status": "${status}",
+            "build_id": "${build_id}",
+            "workflow": "${workflow_id}"
+          }
