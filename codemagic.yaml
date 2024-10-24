@@ -5,9 +5,9 @@ workflows:
       flutter: stable
       xcode: latest
     scripts:
-      - name: Install Dependencies
+      - name: Instalando dependencias
         script: |
-          pip install Flask
+          pip install Flask jq
 
       - name: Start Mock Service
         script: |
@@ -15,11 +15,26 @@ workflows:
           sleep 5 # Dê tempo para o Flask inicializar completamente
           curl -X GET http://127.0.0.1:5000/ || echo "Flask service did not start"
 
-      - name: Check if service is running
+      - name: Verificando se o serviço está online
         script: |
           curl -X GET http://127.0.0.1:5000/ || echo "Service not running"
 
-      - name: Run Tests
+      - name: Obter valor do Cyberark
+        script: |
+          # Captura o json de resposta e extrai o valor do campo "message" 
+          RESPONSE=$(curl -s -X POST http://127.0.0.1:5000/base/veracode/ | jq -r '.message')
+
+          # setando como variavel de ambiente
+          export RESPONSE_CYBERARK=$RESPONSE
+
+          # output opicional para depurar
+          echo "Captured response: $RESPONSE_CYBERARK"
+        
+      - name: Usando os dados recuperados do Cyberark
+        script: |
+          echo "Resposta capturada do Cyberark: $RESPONSE_CYBERARK"
+
+      - name: Testando endpoints
         script: |
           curl -X POST http://127.0.0.1:5000/base/veracode/
           curl -X POST http://127.0.0.1:5000/base/browserstack/
