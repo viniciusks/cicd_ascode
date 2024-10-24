@@ -19,6 +19,7 @@ workflows:
           git clone --branch ${APP_BRANCH} https://github.com/lfandrade/app_principal
           echo clonado
           cd app_principal
+          
 
       # Pré-checagens e Análises
       - name: Pré-flight check
@@ -27,7 +28,7 @@ workflows:
       - name: Análise de dependências SCA usando osv-scanner - MACOS
         script: |
           brew install osv-scanner
-          osv-scanner --lockfile=pubspec.lock
+          osv-scanner --lockfile=app_principal/pubspec.lock
 
       - name: Análise estática de código
         script: flutter analyze
