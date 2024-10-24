@@ -7,8 +7,8 @@ workflows:
       xcode: latest # Usando a versão mais recente do Xcode para builds iOS
       cocoapods: default # Certifique-se de ter o CocoaPods configurado
       node: latest # Node.js pode ser necessário para scripts auxiliares
-      os: macos_monterey # Sistema operacional macOS
-      working_directory: "." # Diretório raiz do projeto
+      #os: macos_monterey # Sistema operacional macOS
+      #working_directory: "." # Diretório raiz do projeto
       vars:
         APP_BRANCH: master # Valor padrão da branch, que pode ser sobrescrito
         FLUTTER_VERSION: 3.22.0 # Valor padrão da versão do Flutter, que pode ser sobrescrito
