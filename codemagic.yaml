@@ -5,7 +5,7 @@ workflows:
       flutter: stable
       xcode: latest
       vars:
-        RESPONSE_CYBERARK: ""
+        RESPONSE_CYBERARK: "TESTE"
     scripts:
       - name: Instalando dependencias
         script: |
