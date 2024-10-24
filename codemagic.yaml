@@ -10,7 +10,7 @@ workflows:
       #os: macos_monterey # Sistema operacional macOS
       #working_directory: "." # Diretório raiz do projeto
       vars:
-        APP_BRANCH: master # Valor padrão da branch, que pode ser sobrescrito
+        APP_BRANCH: main # Valor padrão da branch, que pode ser sobrescrito
         FLUTTER_VERSION: 3.22.0 # Valor padrão da versão do Flutter, que pode ser sobrescrito
     scripts:
       # Etapas iniciais
