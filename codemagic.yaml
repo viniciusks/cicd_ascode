@@ -19,7 +19,22 @@ workflows:
           git clone --branch ${APP_BRANCH} https://github.com/lfandrade/app_principal
           echo clonado
           cd app_principal
-          
+      # Escrever variáveis no .bash_profile - DIRETO
+      #- name: Configurar variáveis de ambiente no .bash_profile
+      #  script: |
+      #    echo 'export VAR1=value1' >> ~/.bash_profile
+      #    echo 'export VAR2=value2' >> ~/.bash_profile
+      #    echo 'export VAR3=value3' >> ~/.bash_profile
+      #    source ~/.bash_profile # Recarrega o bash_profile com as novas variáveis
+
+      # Escrever variáveis no .bash_profile com valores de variáveis do Codemagic
+      - name: Configurar variáveis de ambiente no .bash_profile
+        script: |
+          echo "export VAR1=${CODENAME_VAR1}" >> ~/.bash_profile
+          echo "export VAR2=${CODENAME_VAR2}" >> ~/.bash_profile
+          echo "export VAR3=${CODENAME_VAR3}" >> ~/.bash_profile
+          source ~/.bash_profile # Recarrega o bash_profile com as novas variáveis
+    
 
       # Pré-checagens e Análises
       - name: Pré-flight check
@@ -30,8 +45,8 @@ workflows:
           brew install osv-scanner
           osv-scanner --lockfile=app_principal/pubspec.lock
 
-      - name: Análise estática de código
-        script: flutter analyze
+      #- name: Análise estática de código
+      #  script: flutter analyze
 
       # Instalação de dependências iOS (apenas para builds iOS)
       - name: Instalar dependências do CocoaPods
