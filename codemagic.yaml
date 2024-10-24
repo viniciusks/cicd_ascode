@@ -1,6 +1,10 @@
 workflows:
-  build:
-    steps:
+  flutter-workflow:
+    name: Flutter Workflow with SCA
+    environment:
+      flutter: stable
+      xcode: latest # se for necessário para builds iOS, ajuste conforme sua necessidade
+    scripts:
       - name: Install Dependencies
         script: 
           pip install Flask
