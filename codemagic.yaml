@@ -3,18 +3,24 @@ workflows:
     name: Flutter Workflow with SCA
     environment:
       flutter: stable
-      xcode: latest # se for necessário para builds iOS, ajuste conforme sua necessidade
+      xcode: latest
     scripts:
       - name: Install Dependencies
-        script: 
+        script: |
           pip install Flask
 
       - name: Start Mock Service
-        script: 
+        script: |
           python mock_service.py &
-      
+          sleep 5 # Dê tempo para o Flask inicializar completamente
+          curl -X GET http://127.0.0.1:5000/ || echo "Flask service did not start"
+
+      - name: Check if service is running
+        script: |
+          curl -X GET http://127.0.0.1:5000/ || echo "Service not running"
+
       - name: Run Tests
-        script: 
+        script: |
           curl -X POST http://127.0.0.1:5000/base/veracode/
           curl -X POST http://127.0.0.1:5000/base/browserstack/
           curl -X GET http://127.0.0.1:5000/base/cyberark/chave
