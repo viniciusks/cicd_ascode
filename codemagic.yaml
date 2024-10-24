@@ -2,16 +2,15 @@ workflows:
   build:
     steps:
       - name: Install Dependencies
-        script: |
+        script: 
           pip install Flask
 
       - name: Start Mock Service
-        script: |
+        script: 
           python mock_service.py &
       
       - name: Run Tests
-        script: |
-          # Aqui você pode chamar seus testes que dependem dos serviços mockados
+        script: 
           curl -X POST http://127.0.0.1:5000/base/veracode/
           curl -X POST http://127.0.0.1:5000/base/browserstack/
           curl -X GET http://127.0.0.1:5000/base/cyberark/chave
