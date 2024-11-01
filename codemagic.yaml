@@ -1,54 +1,97 @@
 workflows:
-  flutter-workflow:
-    name: Flutter Workflow with SCA
+  flutter-release:
+    name: Flutter Release Pipeline
     environment:
-      flutter: stable
-      xcode: latest
+      #flutter: stable # Use a versão estável do Flutter
+      flutter: 3.22.0
+      xcode: latest # Usando a versão mais recente do Xcode para builds iOS
+      cocoapods: default # Certifique-se de ter o CocoaPods configurado
+      node: latest # Node.js pode ser necessário para scripts auxiliares
+      #os: macos_monterey # Sistema operacional macOS
+      #working_directory: "." # Diretório raiz do projeto
       vars:
-        RESPONSE_CYBERARK: "TESTE"
+        APP_BRANCH: main # Valor padrão da branch, que pode ser sobrescrito
     scripts:
-      - name: Instalando dependencias
+      # Etapas iniciais
+      - name: Checkout do repositório
         script: |
-          pip install Flask jq
+          git clone --branch ${APP_BRANCH} https://github.com/lfandrade/app_principal
+          echo clonado
+          cd app_principal
 
-      - name: Start Mock Service
+      # Escrever variáveis no .bash_profile com valores de variáveis do Codemagic
+      - name: Configurar variáveis de ambiente
         script: |
-          python mock_service.py &
-          sleep 5 # Dê tempo para o Flask inicializar completamente
-          curl -X GET http://127.0.0.1:5000/ || echo "Flask service did not start"
+          export NEXUS_USER="user_teste_nexus"
 
-      - name: Verificando se o serviço está online
+      # Pré-checagens e Análises
+      - name: Pré-flight check
         script: |
-          curl -X GET http://127.0.0.1:5000/ || echo "Service not running"
+          echo $NEXUS_USER
+          flutter doctor
 
-      - name: Obter valor do Cyberark
+      - name: Análise de dependências SCA usando osv-scanner - MACOS
         script: |
-          # Captura o json de resposta e extrai o valor do campo "message" 
-          RESPONSE=$(curl -s -X POST http://127.0.0.1:5000/base/veracode/ | jq -r '.message')
+          brew install osv-scanner
+          osv-scanner --lockfile=app_principal/pubspec.lock
 
-          # setando como variavel de ambiente no arquivo de env
-          echo "RESPONSE_CYBERARK=$RESPONSE" >> $CM_ENV_PATH
+      #- name: Análise estática de código
+      #  script: flutter analyze
 
-          # output opicional para depurar
-          echo "Captured response: $RESPONSE"
-        
-      - name: Usando os dados recuperados do Cyberark
+      # Instalação de dependências iOS (apenas para builds iOS)
+      - name: Instalar dependências do CocoaPods
+        script: pod install --project-directory=ios
+
+      # Compilação de build
+      - name: Build para Android APK
+        script: flutter build apk --release --obfuscate --split-debug-info=build/debug
+
+      - name: Build para iOS IPA
+        script: flutter build ios --release --obfuscate --split-debug-info=build/debug
+
+      # Upload de artefatos para Nexus
+      - name: Upload APK/IPA para Nexus
         script: |
-          echo "Resposta capturada do Cyberark: $RESPONSE_CYBERARK"
+          curl -v -u ${NEXUS_USER}:${NEXUS_PASSWORD} --upload-file build/app/outputs/flutter-apk/app-release.apk ${NEXUS_URL}/repository/releases/com/seuapp/apk/app-release.apk
+          curl -v -u ${NEXUS_USER}:${NEXUS_PASSWORD} --upload-file build/ios/ipa/Release-iphoneos/app-release.ipa ${NEXUS_URL}/repository/releases/com/seuapp/ipa/app-release.ipa
 
-      - name: Testando endpoints
+      - name: Build obfuscated
+        script: flutter build apk --release --obfuscate --split-debug-info=build/obfuscation/
+
+      # Segurança - Veracode
+      - name: Upload APK para Veracode (SAST)
         script: |
-          curl -X POST http://127.0.0.1:5000/base/veracode/
-          curl -X POST http://127.0.0.1:5000/base/browserstack/
-          curl -X GET http://127.0.0.1:5000/base/cyberark/chave
+          veracode -action upload -file build/app/outputs/flutter-apk/app-release.apk -appname "BV Android" -username ${VERACODE_USER} -password ${VERACODE_PASSWORD}
+          veracode -action upload -file build/ios/ipa/Release-iphoneos/app-release.ipa -appname "BV IOS" -username ${VERACODE_USER} -password ${VERACODE_PASSWORD}
 
-  #publishing:
-  #  webhooks:
-  #    - url: http://127.0.0.1:5000/base/webhook/
-  #      method: POST
-  #      body: |
-  #        {
-  #          "status": "${status}",
-  #          "build_id": "${build_id}",
-  #          "workflow": "${workflow_id}"
-  #        }
+      # Publicação
+      - name: Publicar no Firebase App Distribution (Android)
+        script: |
+          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk --app ${FIREBASE_ANDROID_APP_ID} --groups testers
+
+      - name: Publicar no Firebase App Distribution (iOS)
+        script: |
+          firebase appdistribution:distribute build/ios/ipa/Release-iphoneos/app-release.ipa --app ${FIREBASE_IOS_APP_ID} --groups testers
+
+      - name: Publicar no BrowserStack
+        script: |
+          curl -u "BROWSERSTACK_USER:BROWSERSTACK_ACCESS_KEY" \
+          -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
+          -F "file=@build/app/outputs/flutter-apk/app-release.apk" \
+          -F "custom_id=flutter-app-android"
+
+          curl -u "BROWSERSTACK_USER:BROWSERSTACK_ACCESS_KEY" \
+          -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
+          -F "file=@build/ios/ipa/Release-iphoneos/app-release.ipa" \
+          -F "custom_id=flutter-app-ios"
+
+      - name: Publicar na App Store (iOS)
+        script: |
+          xcrun altool --upload-app --type ios --file build/ios/ipa/Release-iphoneos/app-release.ipa --username ${APPLE_ID} --password ${APP_SPECIFIC_PASSWORD}
+
+      # Tagging do build no Bitbucket
+      - name: Tagging no Bitbucket
+        script: |
+          GIT_TAG="release-$(date +%Y%m%d%H%M%S)"
+          git tag $GIT_TAG
+          git push origin $GIT_TAG
