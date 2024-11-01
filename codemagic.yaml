@@ -11,6 +11,7 @@ workflows:
       #working_directory: "." # Diretório raiz do projeto
       vars:
         APP_BRANCH: main # Valor padrão da branch, que pode ser sobrescrito
+        NEXUS_USER: "user_teste_nexus"
     scripts:
       # Etapas iniciais
       - name: Checkout do repositório
@@ -18,11 +19,6 @@ workflows:
           git clone --branch ${APP_BRANCH} https://github.com/lfandrade/app_principal
           echo clonado
           cd app_principal
-
-      # Escrever variáveis no .bash_profile com valores de variáveis do Codemagic
-      - name: Configurar variáveis de ambiente
-        script: |
-          export NEXUS_USER="user_teste_nexus"
 
       # Pré-checagens e Análises
       - name: Pré-flight check
