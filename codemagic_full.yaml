@@ -3,7 +3,7 @@ workflows:
     name: Flutter Release Pipeline
     environment:
       #flutter: stable # Use a versão estável do Flutter
-      flutter: ${FLUTTER_VERSION}
+      flutter: 3.22.0
       xcode: latest # Usando a versão mais recente do Xcode para builds iOS
       cocoapods: default # Certifique-se de ter o CocoaPods configurado
       node: latest # Node.js pode ser necessário para scripts auxiliares
@@ -11,7 +11,6 @@ workflows:
       #working_directory: "." # Diretório raiz do projeto
       vars:
         APP_BRANCH: main # Valor padrão da branch, que pode ser sobrescrito
-        FLUTTER_VERSION: 3.22.0 # Valor padrão da versão do Flutter, que pode ser sobrescrito
     scripts:
       # Etapas iniciais
       - name: Checkout do repositório
@@ -19,26 +18,17 @@ workflows:
           git clone --branch ${APP_BRANCH} https://github.com/lfandrade/app_principal
           echo clonado
           cd app_principal
-      # Escrever variáveis no .bash_profile - DIRETO
-      #- name: Configurar variáveis de ambiente no .bash_profile
-      #  script: |
-      #    echo 'export VAR1=value1' >> ~/.bash_profile
-      #    echo 'export VAR2=value2' >> ~/.bash_profile
-      #    echo 'export VAR3=value3' >> ~/.bash_profile
-      #    source ~/.bash_profile # Recarrega o bash_profile com as novas variáveis
 
       # Escrever variáveis no .bash_profile com valores de variáveis do Codemagic
-      - name: Configurar variáveis de ambiente no .bash_profile
+      - name: Configurar variáveis de ambiente
         script: |
-          echo "export VAR1=${CODENAME_VAR1}" >> ~/.bash_profile
-          echo "export VAR2=${CODENAME_VAR2}" >> ~/.bash_profile
-          echo "export VAR3=${CODENAME_VAR3}" >> ~/.bash_profile
-          source ~/.bash_profile # Recarrega o bash_profile com as novas variáveis
-    
+          export NEXUS_USER="user_teste_nexus"
 
       # Pré-checagens e Análises
       - name: Pré-flight check
-        script: flutter doctor
+        script: |
+          echo $NEXUS_USER
+          flutter doctor
 
       - name: Análise de dependências SCA usando osv-scanner - MACOS
         script: |
